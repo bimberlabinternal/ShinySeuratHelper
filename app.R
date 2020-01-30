@@ -18,7 +18,7 @@ col_vector <- OOSAP::ColorTheme()$col_vector
 #source("./Fxs.R")
 
 # BS <- readRDS("./data/BigSeurat.rds")
-# SS <- BS[, sample(colnames(BS), 400, replace = F)]
+# SS <- BS[, sample(colnames(BS), 300, replace = F)]
 # saveRDS(SS, "./data/SmallSeurat.rds")
 
 SerInputObj <- readRDS("./data/SmallSeurat.rds")
