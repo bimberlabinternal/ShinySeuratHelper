@@ -12,13 +12,18 @@ library(RColorBrewer)
 library(grid)
 library(gridExtra) 
 library(dplyr)
+library(Seurat)
+col_vector <- OOSAP::ColorTheme()$col_vector
 
 #source("./Fxs.R")
 
+# BS <- readRDS("./data/BigSeurat.rds")
+# SS <- BS[, sample(colnames(BS), 400, replace = F)]
+# saveRDS(SS, "./data/SmallSeurat.rds")
 
-#list2env(readRDS( "./data/ShinyServerDataLS.rds"), envir = globalenv())
+SerInputObj <- readRDS("./data/SmallSeurat.rds")
 
-#ShinyServerDataLS is a list of data:
+
 
 
 
@@ -115,6 +120,37 @@ ui <- dashboardPage(skin="red",
       # First tab content
       tabItem(tabName = "MainDash",
               fluidRow(
+                
+                box(
+                  title = "UMAP", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,
+                  plotOutput("UMAP_2D"), 
+                  width = 5, background = "black"
+                ),
+                box(
+                  title = "tSNE", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,
+                  plotOutput("tSNE_2D"), 
+                  width = 5, background = "black"
+                ),
+                box(
+                  title = "PCA_C1vC2", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,
+                  plotOutput("PCA_12"), 
+                  width = 5, background = "black"
+                ),
+                box(
+                  title = "Legend", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,
+                  plotOutput("Legend"), 
+                  width = 5, background = "black"
+                ),
+                box(
+                  title = "PCA_HM", status = "primary", solidHeader = TRUE,
+                  collapsible = TRUE,
+                  plotOutput("PCA_HM"), 
+                  width = 10, background = "black"
+                )
         
               ) 
       ),
@@ -150,8 +186,56 @@ ui <- dashboardPage(skin="red",
 
 server <- function(input, output, session) {
   
+  output$UMAP_2D <- renderPlot({
+    DimPlot(SerInputObj)+ theme_bw() +
+      theme(legend.position = "none", aspect.ratio=1,
+            legend.title = element_blank())  +
+      scale_color_manual(values=rev(col_vector)) + guides(colour = guide_legend(override.aes = list(size=2, alpha=1), ncol =2))  +
+      coord_cartesian(xlim = NULL, ylim = NULL, expand = FALSE)
+    
+  })
   
- 
+  output$tSNE_2D <- renderPlot({
+    DimPlot(SerInputObj, reduction = "tsne")+ theme_bw() +
+      theme(legend.position = "none", aspect.ratio=1,
+            legend.title = element_blank())  +
+      scale_color_manual(values=rev(col_vector)) + 
+      guides(colour = guide_legend(override.aes = list(size=2, alpha=1), ncol =2))  +
+      coord_cartesian(xlim = NULL, ylim = NULL, expand = FALSE)
+    
+  })
+  
+  output$PCA_12 <- renderPlot({
+    PCAPlot(SerInputObj) + theme_bw() +
+      theme(legend.position = "none", aspect.ratio=1,
+            legend.title = element_blank())  +
+      scale_color_manual(values=rev(col_vector)) + 
+      guides(colour = guide_legend(override.aes = list(size=2, alpha=1), ncol =2))  +
+      coord_cartesian(xlim = NULL, ylim = NULL, expand = FALSE)
+    
+  })
+  
+  output$Legend <- renderPlot({
+    
+    ggFph <- DimPlot(SerInputObj)+ theme_bw() +
+      theme(legend.position = "bottom", aspect.ratio=1,
+            legend.title = element_blank())  +
+      scale_color_manual(values=rev(col_vector)) + 
+      guides(colour = guide_legend(override.aes = list(size=2, alpha=1), ncol =2))  +
+      coord_cartesian(xlim = NULL, ylim = NULL, expand = FALSE)
+    
+
+    grid.draw(cowplot::get_legend(ggFph))
+    
+  })
+  
+  output$PCA_HM <- renderPlot({
+    PCHeatmap(SerInputObj, dims = 1, nfeatures = 30, balanced = T) 
+    #Seurat::TopFeatures(SerInputObj, dims = 1, nfeatures = 30, balanced = T)
+
+    #Loadings(SerInputObj, reduction = "pca")
+  })
+  
   
 }
 
